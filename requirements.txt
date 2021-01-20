@@ -10,6 +10,8 @@ httpx==0.13.3
 hyperframe==5.2.0
 idna==2.10
 pygame==1.9.6
+requests==2.25.1
 rfc3986==1.4.0
 sniffio==1.1.0
 termcolor==1.1.0
+urllib3==1.26.2
