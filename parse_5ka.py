@@ -40,7 +40,7 @@ class parse5ka:
         self.result_path = result_path
 
     @staticmethod
-    def __get_response(url: str, *args, **kwargs) -> requests.Response:
+    def _get_response(url: str, *args, **kwargs) -> requests.Response:
         while True:
             try:
                 response = requests.get(url, *args, **kwargs)
@@ -59,7 +59,7 @@ class parse5ka:
 
     def parse(self, url) -> dict:
         while url:
-            response = self.__get_response(
+            response = self._get_response(
                 url, params = self._params, headers = self._headers
             )
             data = response.json()
@@ -73,9 +73,27 @@ class parse5ka:
             json.dump(data, file, ensure_ascii=False)
             #file.write(json.dumps(data)) то же самое
 
+class ParserCatalog(parse5ka):
+    def __init__(self, categories_url, start_url, result_path):
+        super().__init__(start_url, result_path)
+        self.categories_url = categories_url
+
+    def get_categories(self, url) -> list:
+        response = self._get_response(url)
+        return response.json()
+
+    def run(self):
+        for category in self.get_categories(self.categories_url):
+            self._params["categories"] = category["parent_group_code"]
+            category["products"] = list(self.parse(self.start_url))
+            file_path = self.result_path.joinpath(
+                f'{category["parent_group_code"]}.json'
+            )
+            self.save(category, file_path)
+
 
 if __name__ == '__main__':
     url = 'https://5ka.ru/api/v2/special_offers/'
     result_path = Path(__file__).parent.joinpath('products_5ka')
-    parser = parse5ka(url, result_path)
+    parser = ParserCatalog("https://5ka.ru/api/v2/categories/", url, result_path)
     parser.run()
